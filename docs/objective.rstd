@@ -1,0 +1,43 @@
+@street [
+    name: My street
+
+    @house 21 {
+        members: [
+            @person John Doe,
+            @cat Max
+        ],
+        rooms: [
+            CORRIDOR,
+            BEDROOM,
+            BATHROOM,
+            KITCHEN,
+            GARAGE
+        ]
+    }
+]
+
+Street {
+    name: "My Street",
+    houses: [
+        House {
+            number: 21,
+            members: {
+                persons: [
+                    Person {
+                        name: John Doe
+                    }
+                ],
+                pets: [
+                    Cat {
+                        name: Max
+                    }
+                ]
+            },
+            rooms: [
+                Room::Corridor,
+                Room::Bedroom,
+                ...
+            ]
+        }
+    ]
+}

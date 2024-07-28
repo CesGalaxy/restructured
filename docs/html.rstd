@@ -1,0 +1,21 @@
+@div [
+    class: pt-4 rounded-xl bg-primary
+
+    @a[href: /about, class: text-red-500] About,
+    @button Click me!
+]
+
+HTMLElement::Div {
+    class: ["pt-4", "rounded-xl", "bg-primary"],
+
+    children: [
+        HTMLElement::A {
+            href: "/about",
+            class: ["text-red-500"],
+            children: "About"
+        },
+        HTMLElement::Button {
+            children: "Click me!"
+        }
+    ]
+}
