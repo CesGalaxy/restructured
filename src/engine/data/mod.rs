@@ -78,8 +78,8 @@ impl<'a> DataType<'a> {
         move |input: &'a str| {
             let (input, _) = tag("[")(input)?;
             let (input, _) = multispace0(input)?;
-
             let (input, mut props) = parse_map_properties(&schema)(input)?;
+            let (input, _) = multispace0(input)?;
 
             // TODO: Make this 2 lines with an alt
             let (input, elements) = nom::multi::many0(tuple((
@@ -91,8 +91,7 @@ impl<'a> DataType<'a> {
 
             props.push((collection.0, DataValue::List(elements)));
 
-            let (input, _) = multispace0(input)?;
-            let (input, _) = tag("}")(input)?;
+            let (input, _) = tag("]")(input)?;
 
             Ok((input, DataValue::Map(props)))
         }

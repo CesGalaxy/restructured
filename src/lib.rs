@@ -8,10 +8,13 @@ mod tests {
         @block {
             name: 'example'
             value: 42
-            nested: {
+            nested: [
                 name: 'nested'
                 value: 24
-            }
+                1 3 5 7 9
+                11 13 15 17 19
+                8401
+            ]
         }
     "#;
 
@@ -20,7 +23,7 @@ mod tests {
         let schema = vec![
             ("name", DataType::String),
             ("value", DataType::Number),
-            ("nested", DataType::Object(vec![
+            ("nested", DataType::Container(("numbers", &DataType::Number), vec![
                 ("name", DataType::String),
                 ("value", DataType::Number),
             ])),
