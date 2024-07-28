@@ -4,6 +4,24 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug example 'kartia'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example",
+                    "kartia"
+                ],
+                "filter": {
+                    "name": "kartia",
+                    "kind": "example"
+                }
+            },
+            "args": ["--nocapture"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug unit tests in library 'restructured'",
             "cargo": {
                 "args": [

@@ -2,7 +2,7 @@ pub mod engine;
 
 #[cfg(test)]
 mod tests {
-    use crate::engine::data::DataValue;
+    use crate::engine::data::DataType;
 
     static EXAMPLE_CODE: &str = r#"
         @block {
@@ -17,7 +17,18 @@ mod tests {
 
     #[test]
     fn test_parsing() {
-        let result = DataValue::parse(EXAMPLE_CODE);
+        let schema = vec![
+            ("name", DataType::String),
+            ("value", DataType::Number),
+            ("nested", DataType::Object(vec![
+                ("name", DataType::String),
+                ("value", DataType::Number),
+            ])),
+        ];
+
+        let block = DataType::Block(Box::new(DataType::Object(schema)));
+
+        let result = block.parse()(EXAMPLE_CODE);
         println!("{:?}", result);
     }
 }
