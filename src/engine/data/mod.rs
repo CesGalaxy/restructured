@@ -8,18 +8,20 @@ pub enum DataValue<'a> {
     Number(u64),
     Block(Box<Block<'a>>),
     Map(Vec<(&'a str, DataValue<'a>)>),
-    List(Vec<DataValue<'a>>)
+    List(Vec<DataValue<'a>>),
+    Null
 }
 
 pub type MapPropertyType<'a> = (&'a str, DataType<'a>);
 pub type MapSchema<'a> = Vec<MapPropertyType<'a>>;
 
 pub enum DataType<'a> {
-    Container((&'a str, &'a DataType<'a>),  MapSchema<'a>),
-    Object (MapSchema<'a>),
     String,
     Number,
     Block(Box<DataType<'a>>),
+    Object (MapSchema<'a>),
+    Container(&'a str, Box<DataType<'a>>,  MapSchema<'a>),
+    Nullable(Box<DataType<'a>>),
 }
 
 impl<'a> DataType<'a> {
@@ -31,9 +33,10 @@ impl<'a> DataType<'a> {
             let (input, res) = match self {
                 DataType::String => Self::parse_string(input),
                 DataType::Number => Self::parse_number(input),
-                DataType::Block(schema) => Self::parse_block(schema)(input),
+                DataType::Block(dtype) => Self::parse_block(dtype)(input),
                 DataType::Object(schema) => Self::parse_object(schema)(input),
-                DataType::Container(collection, schema) => Self::parse_container(collection, schema)(input),
+                DataType::Container(key, collection_type, schema) => Self::parse_container(key, collection_type, schema)(input),
+                DataType::Nullable(dtype) => Self::parse_nullable(dtype)(input),
             }?;
 
             Ok((input, res))
@@ -54,9 +57,9 @@ impl<'a> DataType<'a> {
         Ok((input, DataValue::Number(res.parse().unwrap())))
     }
 
-    pub fn parse_block(schema: &'a DataType<'a>) -> impl Fn(&'a str) -> IResult<&'a str, DataValue> {
+    pub fn parse_block(dtype: &'a DataType<'a>) -> impl Fn(&'a str) -> IResult<&'a str, DataValue> {
         move |input: &'a str| {
-            let (input, block) = Block::<'a>::parse(schema)(input)?;
+            let (input, block) = Block::<'a>::parse(dtype)(input)?;
 
             Ok((input, DataValue::Block(Box::new(block))))
         }
@@ -74,26 +77,36 @@ impl<'a> DataType<'a> {
         }
     }
 
-    pub fn parse_container(collection: &'a (&'a str, &'a DataType<'a>), schema: &'a MapSchema<'a>) -> impl Fn(&'a str) -> IResult<&'a str, DataValue<'a>> {
+    pub fn parse_container(key: &'a str, collection_type: &'a DataType<'a>, schema: &'a MapSchema<'a>) -> impl Fn(&'a str) -> IResult<&'a str, DataValue<'a>> {
         move |input: &'a str| {
             let (input, _) = tag("[")(input)?;
             let (input, _) = multispace0(input)?;
             let (input, mut props) = parse_map_properties(&schema)(input)?;
             let (input, _) = multispace0(input)?;
 
-            // TODO: Make this 2 lines with an alt
             let (input, elements) = nom::multi::many0(tuple((
-                collection.1.parse(),
+                collection_type.parse(),
                 multispace0,
             )))(input)?;
 
             let elements: Vec<DataValue> = elements.iter().map(|(element, _)| element).cloned().collect();
 
-            props.push((collection.0, DataValue::List(elements)));
+            props.push((key, DataValue::List(elements)));
 
             let (input, _) = tag("]")(input)?;
 
             Ok((input, DataValue::Map(props)))
+        }
+    }
+
+    pub fn parse_nullable(dtype: &'a DataType<'a>) -> impl Fn(&'a str) -> IResult<&'a str, DataValue<'a>> {
+        move |input: &'a str| {
+            Ok(if let Ok((input, res)) = dtype.parse()(input) {
+                (input, res)
+            } else {
+                let (input, _) = tag("null")(input)?;
+                (input, DataValue::Null)
+            })
         }
     }
 }

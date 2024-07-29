@@ -7,7 +7,7 @@ mod tests {
     static EXAMPLE_CODE: &str = r#"
         @block {
             name: 'example'
-            value: 42
+            value: null
             nested: [
                 name: 'nested'
                 value: 24
@@ -22,8 +22,8 @@ mod tests {
     fn test_parsing() {
         let schema = vec![
             ("name", DataType::String),
-            ("value", DataType::Number),
-            ("nested", DataType::Container(("numbers", &DataType::Number), vec![
+            ("value", DataType::Nullable(Box::new(DataType::Number))),
+            ("nested", DataType::Container("numbers", Box::new(DataType::Number), vec![
                 ("name", DataType::String),
                 ("value", DataType::Number),
             ])),

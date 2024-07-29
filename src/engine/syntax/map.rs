@@ -1,6 +1,6 @@
 use nom::{bytes::complete::tag, character::complete::{alpha1, multispace0}, sequence::tuple, IResult};
 
-use crate::engine::data::{DataValue, MapSchema};
+use crate::engine::data::{DataType, DataValue, MapSchema};
 
 pub fn parse_map_properties<'a>(schema: &'a MapSchema<'a>) -> impl Fn(&'a str) -> IResult<&'a str, Vec<(&'a str, DataValue)>> {
     move |input: &'a str| {
@@ -9,7 +9,13 @@ pub fn parse_map_properties<'a>(schema: &'a MapSchema<'a>) -> impl Fn(&'a str) -
             multispace0,
         )))(input)?;
 
-        let props = props.iter().map(|(prop, _)| prop).cloned().collect();
+        let props: Vec<(&'a str, DataValue)> = props.iter().map(|(prop, _)| prop).cloned().collect();
+
+        let schema_satisfied = schema.iter().all(|(s_key, s_type)| {
+            props.iter().any(|(p_key, _)| p_key == s_key) || matches!(s_type, DataType::Nullable(_))
+        });
+
+        assert!(schema_satisfied, "schema not satisfied");
 
         Ok((input, props))
     }
